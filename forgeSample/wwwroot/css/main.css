@@ -1,0 +1,50 @@
+﻿html, body {
+  min-height: 100%;
+  height: 100%;
+}
+
+body {
+  padding-top: 60px;
+  /* space for the top nav bar */
+  margin-right: 30px;
+}
+
+.col-xs-6-center {
+  float: none !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn-group-wrap {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.container {
+  margin-top: 100px;
+}
+
+.listing-block {
+  margin-top: 20px;
+  overflow-y: scroll;
+  height: calc(100vh - 120px);
+}
+
+.result-list {
+  list-style-type: none;
+  width: 100%;
+}
+ 
+.result-thumbnail {
+  float: left;
+  margin: 0 15px 0 0;
+  width: 100px;
+  height: 100px;
+  border-bottom: 1px solid #C0C0C0;
+}
+ 
+.result-item {
+  padding: 0px;
+  height: 100px;
+  border-bottom: 1px solid #C0C0C0;
+}

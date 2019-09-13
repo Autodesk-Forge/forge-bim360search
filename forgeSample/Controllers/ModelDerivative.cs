@@ -32,8 +32,22 @@ using Hangfire.Console;
 namespace forgeSample.Controllers
 {
     [ApiController]
-    public class ModelDerivative : ControllerBase
+    public class ModelDerivativeController : ControllerBase
     {
+
+        [HttpGet]
+        [Route("api/forge/modelderivative/{urn}/thumbnail")]
+        public async Task<IActionResult> GetThumbnail(string urn)
+        {
+            Credentials credentials = await Credentials.FromSessionAsync(base.Request.Cookies, Response.Cookies);
+            if (credentials == null) { return Unauthorized(); }
+
+            DerivativesApi derivatives = new DerivativesApi();
+            derivatives.Configuration.AccessToken = credentials.TokenInternal;
+
+            return File(await derivatives.GetThumbnailAsync(urn, 100, 100), "image/jpeg");
+        }
+
         /// <summary>
         /// Start the translation job for a given urn
         /// </summary>
@@ -48,10 +62,11 @@ namespace forgeSample.Controllers
             derivative.Configuration.AccessToken = credentials.TokenInternal;
 
             dynamic document = new JObject();
-            document.hubId =  hubId.Replace("-", string.Empty); // this is breaking the search...
+            document.hubId = hubId.Replace("-", string.Empty); // this is breaking the search...
             document.projectId = projectId;
             document.folderUrn = folderUrn;
             document.itemUrn = itemUrn;
+            document.versionUrn = versionUrn;
             document.fileName = fileName;
             document.metadata = new JArray();
 
@@ -69,7 +84,7 @@ namespace forgeSample.Controllers
                 {
                     dynamic viewProperties = new JObject();
                     viewProperties.viewId = (string)metadataItem.Value.guid;
-                    viewProperties.collection = collection.ToString(Newtonsoft.Json.Formatting.None); // (string)Regex.Replace(properties.ToString(), @"(""[^""\\]*(?:\\.[^""\\]*)*"")|\s+", "$1");
+                    viewProperties.collection = collection.ToString(Newtonsoft.Json.Formatting.None);
                     document.metadata.Add(viewProperties);
                 }
             }
@@ -84,83 +99,6 @@ namespace forgeSample.Controllers
             IRestResponse res = await client.ExecuteTaskAsync(request);
 
             Console.WriteLine(string.Format("Status: {0}", res.StatusCode.ToString()));
-            console.WriteLine(string.Format("Status: {0}", res.StatusCode.ToString()));
-
-
-
-            // prepare the payload
-            /* List<JobPayloadItem> outputs = new List<JobPayloadItem>()
-            {
-            new JobPayloadItem(
-              JobPayloadItem.TypeEnum.Svf,
-              new List<JobPayloadItem.ViewsEnum>()
-              {
-                JobPayloadItem.ViewsEnum._2d,
-                JobPayloadItem.ViewsEnum._3d
-              })
-            };
-            JobPayload job;
-            job = new JobPayload(new JobPayloadInput(urn), new JobPayloadOutput(outputs));*/
-            //dynamic jobPosted = await derivative.TranslateAsync(job);
-
-            /*
-            {
-              "jsonapi": {
-                "version": "1.0"
-              },
-              "data": {
-                "id": {your uuid for this call}
-                "type": "commands",
-                "attributes": {
-                  "extension": {
-                    "type": "commands:autodesk.bim360:files.process",
-                    "version": "1.0.0",
-                    "data": {
-                      'files': [{
-                        'versionUrn': 'xxxxxxx',
-                        'versionName': '',
-                        'parentFolderUrn': 'xxxxxxx'
-                      }]
-                    }
-                  }
-                }
-              }
-            } 
-            */
-
-            /*
-                        dynamic payload = JObject.Parse(@"{'jsonapi':{'version':'1.0'},'data':{'id':'','type':'commands','attributes':{'extension':{'type':'commands:autodesk.bim360:files.process','version':'1.0.0','data':{'files':[{'versionUrn':'','versionName':'','parentFolderUrn':''}]}}}}}");
-                        payload.data.id = Guid.NewGuid().ToString(); // works as our uuid
-                        payload.data.attributes.extension.data.files[0].versionUrn = versionUrn;
-                        payload.data.attributes.extension.data.files[0].parentFolderUrn = parentFolderUrn;
-
-                        console.WriteLine(string.Format("Starting translation for {0}", fileName));
-
-                        RestClient client = new RestClient("https://developer.api.autodesk.com");
-                        RestRequest request = new RestRequest("/dm/v1/projects/{project_id}/commands", RestSharp.Method.POST);
-                        request.AddParameter("project_id", projectId.Replace("b.", string.Empty), ParameterType.UrlSegment);
-                        request.AddHeader("Authorization", "Bearer " + credentials.TokenInternal);
-                        request.AddHeader("Content-Type", "application/vnd.api+json");
-                        request.AddParameter("text/json", Newtonsoft.Json.JsonConvert.SerializeObject(payload), ParameterType.RequestBody);
-                        IRestResponse res = await client.ExecuteTaskAsync(request);
-
-                        for (int i = 0; i < 5760; i++)
-                        {
-                            System.Threading.Thread.Sleep(15000); // wait before first check... 
-                            await credentials.RefreshAsync();
-                            try
-                            {
-                                dynamic manifest = await derivative.GetManifestAsync(Base64Encode(versionUrn));
-                                int progress = (string.IsNullOrWhiteSpace(Regex.Match(manifest.progress, @"\d+").Value) ? 100 : Int32.Parse(Regex.Match(manifest.progress, @"\d+").Value));
-                                console.WriteLine(string.Format("Progress: {0}%", progress));
-                                if (progress == 100) break;
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.Message);
-                            }
-                        }
-                        console.WriteLine("Done");*/
         }
 
         public static string Base64Encode(string plainText)

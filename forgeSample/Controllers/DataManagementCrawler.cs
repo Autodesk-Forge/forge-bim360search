@@ -32,13 +32,13 @@ using System.Linq;
 
 namespace forgeSample.Controllers
 {
-    public class CrawlerController : ControllerBase
+    public class DataManagementCrawlerController : ControllerBase
     {
         /// <summary>
         /// GET TreeNode passing the ID
         /// </summary>
         [HttpGet]
-        [Route("api/forge/datamanagement/index/{hubid}")]
+        [Route("api/forge/datamanagement/{hubid}/index")]
         public async Task<IActionResult> GetTreeNodeAsync(string hubId)
         {
             Credentials credentials = await Credentials.FromSessionAsync(base.Request.Cookies, Response.Cookies);
@@ -136,36 +136,7 @@ namespace forgeSample.Controllers
 
             context.WriteLine(string.Format("{0}: {1}", fileName, versionUrn));
 
-            metadataQueue.Create(() => ModelDerivative.ProcessFileAsync(credentials.UserId, hubId, projectId, folderUrn, itemUrn, versionUrn, fileName, null), state);
-
-
-            return;
-            /*foreach (KeyValuePair<string, dynamic> version in new DynamicDictionaryItems(versions.data))
-            {
-                string processState = version.Value.attributes.extension.data.processState;
-                string parentFolderUrn = parentFolder.data.relationships.parent.data.id;
-                string versionUrn = version.Value.id;
-                string fileName = version.Value.attributes.name;
-                string extension = fileName.Split(".").Last();
-
-                if (!IsSupportedFormat(extension)) continue;
-
-                if (processState == "PROCESSING_SUSPEND")
-                {
-                    context.SetTextColor(ConsoleTextColor.Green);
-                    context.WriteLine(string.Format("{0}: > enqueuing process job", fileName));
-                    metadataQueue.Create(() => ModelDerivative.ProcessFileAsync(credentials.UserId, projectId, parentFolderUrn, versionUrn, fileName, null), state);
-                }
-                else
-                {
-                    context.SetTextColor(ConsoleTextColor.Gray);
-                    context.WriteLine(string.Format("{0}: > no action", fileName));
-
-                }
-                context.ResetTextColor();
-
-            }
-            System.Threading.Thread.Sleep(3000); // avoid rate-limit (dirty trick)*/
+            metadataQueue.Create(() => ModelDerivativeController.ProcessFileAsync(credentials.UserId, hubId, projectId, folderUrn, itemUrn, versionUrn, fileName, null), state);
         }
     }
 }
