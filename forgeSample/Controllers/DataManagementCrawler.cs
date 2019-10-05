@@ -74,6 +74,15 @@ namespace forgeSample.Controllers
                 {
                     if (folder.Value.attributes.displayName != "Project Files") continue;
                     await GetFolderContentsAsync(credentials, hubId, folder.Value.links.self.href, context);
+
+                    // 
+                    string[] hrefParams = folder.Value.links.self.href.Split('/');
+                    string folderUrn = hrefParams[hrefParams.Length - 1];
+
+                    // start listening for this folder (Project Files)
+                    DMWebhook webhooksApi = new DMWebhook(credentials.TokenInternal, Config.WebhookUrl);
+                    await webhooksApi.DeleteHook(Event.VersionAdded, folderUrn); // remove old (needed when doing local test with ngrok or to create a new one)
+                    await webhooksApi.CreateHook(Event.VersionAdded, projectInfo.Value.id, folderUrn);
                 }
             }
 

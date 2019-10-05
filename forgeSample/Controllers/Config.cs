@@ -71,5 +71,13 @@ namespace forgeSample
                 return (string.IsNullOrEmpty(v) ? 10 : Int32.Parse(v));
             }
         }
+
+        public static string WebhookUrl
+        {
+            get
+            {
+                return Config.GetAppSetting("FORGE_WEBHOOK_URL") + "/api/forge/callback/webhook";
+            }
+        }
     }
 }
