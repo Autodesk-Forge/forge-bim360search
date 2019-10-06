@@ -57,58 +57,58 @@ namespace forgeSample.Controllers
             DerivativesApi derivative = new DerivativesApi();
             derivative.Configuration.AccessToken = credentials.TokenInternal;
 
-            dynamic document = new JObject();
-            document.hubId = hubId.Replace("-", string.Empty); // this is breaking the search...
-            document.projectId = projectId;
-            document.folderUrn = folderUrn;
-            document.itemUrn = itemUrn;
-            document.versionUrn = versionUrn;
-            document.fileName = fileName;
-            document.metadata = new JArray();
-
-            string versionUrn64 = Base64Encode(versionUrn);
-            //console.WriteLine(string.Format("Retrieving data for {0}/{1}/{2}/{3}/{4}", hubId, projectId, folderUrn, itemUrn, versionUrn));
-            //console.WriteLine(string.Format("https://docs.b360.autodesk.com/projects/{0}/folders/{1}/detail/viewer/items/{2}",projectId.Replace("b.", string.Empty), folderUrn, itemUrn));
-            dynamic manifest = await derivative.GetManifestAsync(versionUrn64);
-            if (manifest.status == "inprogress")
+            using (dynamic document = new JObject())
             {
-                throw new Exception("Translating..."); // force run it again
-            }
+                document.hubId = hubId.Replace("-", string.Empty); // this is breaking the search...
+                document.projectId = projectId;
+                document.folderUrn = folderUrn;
+                document.itemUrn = itemUrn;
+                document.versionUrn = versionUrn;
+                document.fileName = fileName;
+                document.metadata = new JArray();
+
+                string versionUrn64 = Base64Encode(versionUrn);
+                dynamic manifest = await derivative.GetManifestAsync(versionUrn64);
+                if (manifest.status == "inprogress") throw new Exception("Translating..."); // force run it again
 
 
-            dynamic metadata = await derivative.GetMetadataAsync(versionUrn64);
-            foreach (KeyValuePair<string, dynamic> metadataItem in new DynamicDictionaryItems(metadata.data.metadata))
-            {
-                console.WriteLine(string.Format("View: {0}", (string)metadataItem.Value.guid));
-                dynamic properties = await derivative.GetModelviewPropertiesAsync(versionUrn64, metadataItem.Value.guid);
-
-                JArray collection = JObject.Parse(properties.ToString()).data.collection;
-                if (collection.Count > 0)
+                dynamic metadata = await derivative.GetMetadataAsync(versionUrn64);
+                foreach (KeyValuePair<string, dynamic> metadataItem in new DynamicDictionaryItems(metadata.data.metadata))
                 {
-                    dynamic viewProperties = new JObject();
-                    viewProperties.viewId = (string)metadataItem.Value.guid;
-                    viewProperties.collection = collection.ToString(Newtonsoft.Json.Formatting.None);
-                    document.metadata.Add(viewProperties);
+                    console.WriteLine(string.Format("View: {0}", (string)metadataItem.Value.guid));
+                    JArray collection = null;
+                    using (dynamic properties = await derivative.GetModelviewPropertiesAsync(versionUrn64, metadataItem.Value.guid))
+                        collection = JObject.Parse(properties.ToString()).data.collection;
+
+                    if (collection.Count > 0)
+                    {
+                        using (dynamic viewProperties = new JObject())
+                        {
+                            viewProperties.viewId = (string)metadataItem.Value.guid;
+                            viewProperties.collection = collection.ToString(Newtonsoft.Json.Formatting.None);
+                            document.metadata.Add(viewProperties);
+                        }
+                    }
                 }
+
+                string json = (string)document.ToString(Newtonsoft.Json.Formatting.None);
+                string absolutePath = string.Format("/manifest/_doc/{0}", Base64Encode(itemUrn));
+
+                RestClient client = new RestClient(Config.ElasticSearchServer);
+                RestRequest request = new RestRequest(absolutePath, RestSharp.Method.POST);
+                request.AddHeader("Content-Type", "application/json");
+                request.AddParameter("text/json", json, ParameterType.RequestBody);
+
+                SortedDictionary<string, string> headers = AWS.Signature.SignatureHeader(
+                    Amazon.RegionEndpoint.GetBySystemName(Config.ElasticSearchServerRegion),
+                    new Uri(Config.ElasticSearchServer).Host,
+                    "POST", json, absolutePath);
+                foreach (var entry in headers) request.AddHeader(entry.Key, entry.Value);
+
+                IRestResponse res = await client.ExecuteTaskAsync(request);
+
+                console.WriteLine(string.Format("Status: {0}", res.StatusCode.ToString()));
             }
-
-            string json = (string)document.ToString(Newtonsoft.Json.Formatting.None);
-            string absolutePath = string.Format("/manifest/_doc/{0}", Base64Encode(itemUrn));
-
-            RestClient client = new RestClient(Config.ElasticSearchServer);
-            RestRequest request = new RestRequest(absolutePath, RestSharp.Method.POST);
-            request.AddHeader("Content-Type", "application/json");
-            request.AddParameter("text/json", json, ParameterType.RequestBody);
-
-            SortedDictionary<string, string> headers = AWS.Signature.SignatureHeader(
-                Amazon.RegionEndpoint.GetBySystemName(Config.ElasticSearchServerRegion),
-                new Uri(Config.ElasticSearchServer).Host,
-                "POST", json, absolutePath);
-            foreach (var entry in headers) request.AddHeader(entry.Key, entry.Value);
-
-            IRestResponse res = await client.ExecuteTaskAsync(request);
-
-            console.WriteLine(string.Format("Status: {0}", res.StatusCode.ToString()));
         }
 
         public static string Base64Encode(string plainText)
