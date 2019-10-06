@@ -36,85 +36,6 @@ namespace forgeSample.Controllers
         /// </summary>
         private Credentials Credentials { get; set; }
 
-        // with the api/forge/callback/webhook endpoint
-        // e.g. local testing with http://1234.ngrok.io
-        /* 
-                public string CallbackUrl { get { return Config.GetAppSetting("FORGE_WEBHOOK_URL") + "/api/forge/callback/webhook"; } }
-
-                private string ExtractFolderIdFromHref(string href)
-                {
-                    string[] idParams = href.Split('/');
-                    string resource = idParams[idParams.Length - 2];
-                    string folderId = idParams[idParams.Length - 1];
-                    if (!resource.Equals("folders")) return string.Empty;
-                    return folderId;
-                }
-
-                private string ExtractProjectIdFromHref(string href)
-                {
-                    string[] idParams = href.Split('/');
-                    string resource = idParams[idParams.Length - 4];
-                    string folderId = idParams[idParams.Length - 3];
-                    if (!resource.Equals("projects")) return string.Empty;
-                    return folderId;
-                }
-
-                [HttpGet]
-                [Route("api/forge/webhook")]
-                public async Task<IList<GetHookData.Hook>> GetHooks(string href)
-                {
-                    string folderId = ExtractFolderIdFromHref(href);
-                    if (string.IsNullOrWhiteSpace(folderId)) return null;
-
-                    Credentials = await Credentials.FromSessionAsync(base.Request.Cookies, Response.Cookies);
-                    if (Credentials == null) { return null; }
-
-                    DMWebhook webhooksApi = new DMWebhook(Credentials.TokenInternal, CallbackUrl);
-                    IList<GetHookData.Hook> hooks = await webhooksApi.Hooks(Event.VersionAdded, folderId);
-
-                    return hooks;
-                }
-
-                public class HookInputData
-                {
-                    public string href { get; set; }
-                }
-
-                [HttpPost]
-                [Route("api/forge/webhook")]
-                public async Task<IActionResult> CreateHook([FromForm]HookInputData input)
-                {
-                    string folderId = ExtractFolderIdFromHref(input.href);
-                    if (string.IsNullOrWhiteSpace(folderId)) return BadRequest();
-
-                    string projectId = ExtractProjectIdFromHref(input.href);
-                    if (string.IsNullOrWhiteSpace(projectId)) return BadRequest();
-
-                    Credentials = await Credentials.FromSessionAsync(base.Request.Cookies, Response.Cookies);
-                    if (Credentials == null) { return Unauthorized(); }
-
-                    DMWebhook webhooksApi = new DMWebhook(Credentials.TokenInternal, CallbackUrl);
-                    await webhooksApi.CreateHook(Event.VersionAdded, projectId, folderId);
-
-                    return Ok();
-                }
-
-                [HttpDelete]
-                [Route("api/forge/webhook")]
-                public async Task<IActionResult> DeleteHook(HookInputData input)
-                {
-                    string folderId = ExtractFolderIdFromHref(input.href);
-                    if (string.IsNullOrWhiteSpace(folderId)) return BadRequest();
-
-                    Credentials = await Credentials.FromSessionAsync(base.Request.Cookies, Response.Cookies);
-                    if (Credentials == null) { return Unauthorized(); }
-
-                    DMWebhook webhooksApi = new DMWebhook(Credentials.TokenInternal, CallbackUrl);
-                    await webhooksApi.DeleteHook(Event.VersionAdded, folderId);
-
-                    return Ok();
-                }*/
-
         [HttpPost]
         [Route("api/forge/callback/webhook")]
         public async Task<IActionResult> WebhookCallback([FromBody]JObject body)
@@ -143,36 +64,6 @@ namespace forgeSample.Controllers
 
             // ALWAYS return ok (200)
             return Ok();
-        }
-
-        public async static Task ExtractMetadata(string userId, string projectId, string versionId)
-        {
-            // this operation may take a moment
-            Credentials credentials = await Credentials.FromDatabaseAsync(userId);
-
-            // at this point we have:
-            // projectId & versionId
-            // valid access token
-
-            // ready to access the files! let's do a quick test
-            // as we're tracking the modified event, the manifest should be there...
-            try
-            {
-                DerivativesApi derivativeApi = new DerivativesApi();
-                derivativeApi.Configuration.AccessToken = credentials.TokenInternal;
-                dynamic manifest = await derivativeApi.GetManifestAsync(Base64Encode(versionId));
-
-                if (manifest.status == "inprogress") throw new Exception("Translating..."); // force run it again
-
-                // now we have the metadata, can do something, like send email or generate a report...
-                // for this sample, just a simple console write line
-                Console.WriteLine(manifest);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw; // this should force Hangfire to try again 
-            }
         }
 
         /// <summary>

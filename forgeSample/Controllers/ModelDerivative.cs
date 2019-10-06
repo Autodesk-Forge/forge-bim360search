@@ -108,7 +108,7 @@ namespace forgeSample.Controllers
 
             IRestResponse res = await client.ExecuteTaskAsync(request);
 
-            Console.WriteLine(string.Format("Status: {0}", res.StatusCode.ToString()));
+            console.WriteLine(string.Format("Status: {0}", res.StatusCode.ToString()));
         }
 
         public static string Base64Encode(string plainText)
