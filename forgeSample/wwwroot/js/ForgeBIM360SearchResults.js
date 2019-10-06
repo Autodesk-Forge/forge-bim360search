@@ -29,11 +29,11 @@ $(document).ready(function () {
     jQuery.ajax({
         url: '/api/forge/datamanagement/hubs/' + accountId + '/search?q=' + q,
         success: function (results) {
-            if (results.length===0){
+            if (results.length === 0) {
                 $('#resultList').append('<h3>Could not find any results...</h3>');
             }
             results.forEach(function (item) {
-                var bim360Url = 'https://docs.b360.autodesk.com/projects/' + item._source.projectId.replace("b.", '') + '/folders/' + item._source.folderUrn + '/detail/viewer/items/' + item._source.itemUrn;
+                var bim360Url = 'https://docs.b360' + (item._source.folderUrn.indexOf('emea') > 0 ? '.eu' : '') + '.autodesk.com/projects/' + item._source.projectId.replace("b.", '') + '/folders/' + item._source.folderUrn + '/detail/viewer/items/' + item._source.itemUrn;
                 $('#resultList').append('<li class="result-item"><img src="/api/forge/modelderivative/' + btoa(item._source.versionUrn).replace("/", "_") + '/thumbnail" class="result-thumbnail" /><h4><a href="' + bim360Url + '">' + item._source.fileName + '</a></h4></li>')
             })
         }
