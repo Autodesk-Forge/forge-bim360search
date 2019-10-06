@@ -71,18 +71,12 @@ namespace forgeSample.Controllers
             string versionUrn64 = Base64Encode(versionUrn);
             //console.WriteLine(string.Format("Retrieving data for {0}/{1}/{2}/{3}/{4}", hubId, projectId, folderUrn, itemUrn, versionUrn));
             //console.WriteLine(string.Format("https://docs.b360.autodesk.com/projects/{0}/folders/{1}/detail/viewer/items/{2}",projectId.Replace("b.", string.Empty), folderUrn, itemUrn));
-            try
+            dynamic manifest = await derivative.GetManifestAsync(versionUrn64);
+            if (manifest.status == "inprogress")
             {
-                dynamic manifest = await derivative.GetManifestAsync(versionUrn64);
-                if (manifest.status == "inprogress")
-                {
-                    throw new Exception("Translating..."); // force run it again
-                }
+                throw new Exception("Translating..."); // force run it again
             }
-            catch (Exception ex)
-            {
 
-            }
 
             dynamic metadata = await derivative.GetMetadataAsync(versionUrn64);
             foreach (KeyValuePair<string, dynamic> metadataItem in new DynamicDictionaryItems(metadata.data.metadata))
