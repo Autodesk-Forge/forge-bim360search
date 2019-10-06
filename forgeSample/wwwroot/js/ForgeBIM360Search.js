@@ -18,8 +18,6 @@
 
 $(document).ready(function () {
     getAccounts(function (hubs) {
-        if (hubs.length == 1) {
-            $("#bim360accounts").val(hubs[0].id);
-        }
+        
     });
 });
