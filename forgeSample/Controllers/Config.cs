@@ -46,6 +46,22 @@ namespace forgeSample
             }
         }
 
+        public static string AWSKey
+        {
+            get
+            {
+                return Config.GetAppSetting("AWS_ACCESS_KEY");
+            }
+        }
+
+        public static string AWSSecret
+        {
+            get
+            {
+                return Config.GetAppSetting("AWS_SECRET_KEY");
+            }
+        }
+
 
         public static string DatabaseName
         {
@@ -60,6 +76,14 @@ namespace forgeSample
             get
             {
                 return Config.GetAppSetting("ELASTIC_SEARCH_SERVER");
+            }
+        }
+
+        public static string ElasticSearchServerRegion
+        {
+            get
+            {
+                return Config.GetAppSetting("ELASTIC_SEARCH_SERVER_REGION");
             }
         }
 

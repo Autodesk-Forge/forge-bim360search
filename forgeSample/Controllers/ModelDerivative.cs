@@ -18,12 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Autodesk.Forge;
 using Autodesk.Forge.Model;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using Hangfire.Server;
@@ -95,12 +93,19 @@ namespace forgeSample.Controllers
             }
 
             string json = (string)document.ToString(Newtonsoft.Json.Formatting.None);
+            string absolutePath = string.Format("/manifest/_doc/{0}", Base64Encode(itemUrn));
 
             RestClient client = new RestClient(Config.ElasticSearchServer);
-            RestRequest request = new RestRequest("/manifest/_doc/{itemUrn64}", RestSharp.Method.POST);
-            request.AddParameter("itemUrn64", Base64Encode(itemUrn), ParameterType.UrlSegment);
+            RestRequest request = new RestRequest(absolutePath, RestSharp.Method.POST);
             request.AddHeader("Content-Type", "application/json");
             request.AddParameter("text/json", json, ParameterType.RequestBody);
+
+            SortedDictionary<string, string> headers = AWS.Signature.SignatureHeader(
+                Amazon.RegionEndpoint.GetBySystemName(Config.ElasticSearchServerRegion),
+                new Uri(Config.ElasticSearchServer).Host,
+                "POST", json, absolutePath);
+            foreach (var entry in headers) request.AddHeader(entry.Key, entry.Value);
+
             IRestResponse res = await client.ExecuteTaskAsync(request);
 
             Console.WriteLine(string.Format("Status: {0}", res.StatusCode.ToString()));

@@ -1,0 +1,54 @@
+{
+    "name": "forge-bim360search",
+    "description": "Index and search on BIM 360 metadata",
+    "repository": "https://github.com/autodesk-forge/forge-bim360search",
+    "logo": "https://avatars0.githubusercontent.com/u/8017462?v=3&s=200",
+    "keywords": [
+        "autodesk",
+        "forge",
+        "bim360"
+    ],
+    "env": {
+        "FORGE_CLIENT_ID": {
+            "description": "Forge Client ID"
+        },
+        "FORGE_CLIENT_SECRET": {
+            "description": "Forge Client Secret"
+        },
+        "FORGE_CALLBACK_URL": {
+            "description": "Callback URL of your Forge app, required for 3-legged OAuth",
+            "value": "https://<<YOUR HEROKU APP NAME HERE>>.herokuapp.com/api/forge/callback/oauth"
+        },
+        "FORGE_WEBHOOK_URL": {
+            "description": "Callback URL of your webhooks",
+            "value": "https://<<YOUR HEROKU APP NAME HERE>>.herokuapp.com"
+        },
+        "OAUTH_DATABASE": {
+            "description": "MongoDB connection string",
+            "value": "mongodb+srv://<username>:<password>@clusterX-a1b2c4.mongodb.net/bim360search?retryWrites=true"
+        },
+        "ELASTIC_SEARCH_SERVER": {
+            "description": "Amazon Elasticsearch endpoint",
+            "value": "https://search-yourElasticSearch.region.es.amazonaws.com"
+        },
+        "ELASTIC_SEARCH_SERVER_REGION": {
+            "description": "Amazon Elasticsearch Region",
+            "value": "e.g. us-east-1"
+        },
+        "AWS_ACCESS_KEY": {
+            "description": "AWS Access key",
+            "value": ""
+        },
+        "AWS_SECRET_KEY": {
+            "description": "AWS Secrete Key",
+            "value": ""
+        }
+    },
+    "website": "https://developer.autodesk.com/",
+    "success_url": "/",
+    "buildpacks": [
+        {
+            "url": "https://github.com/jincod/dotnetcore-buildpack.git"
+        }
+    ]
+}

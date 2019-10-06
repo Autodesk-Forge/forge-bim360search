@@ -20,15 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Autodesk.Forge;
-using Autodesk.Forge.Model;
 using Newtonsoft.Json.Linq;
-using System.Net;
-using Hangfire;
-using Hangfire.States;
-using Hangfire.Server;
-using Hangfire.Console;
-using System.Linq;
 using RestSharp;
 
 namespace forgeSample.Controllers
@@ -46,10 +38,19 @@ namespace forgeSample.Controllers
             if (credentials == null) { return null; }
 
             string json = "{\"_source\":[\"projectId\",\"folderUrn\",\"itemUrn\",\"versionUrn\", \"fileName\"],\"query\":{\"bool\":{\"must\":{\"match\":{\"metadata.collection\":\"" + q + "\"}},\"filter\":[{\"term\":{\"hubId\":\"" + hubId.Replace("-", string.Empty) + "\"}}]}}}";
+            string absolutePath = "/manifest/_search";
+
             RestClient client = new RestClient(Config.ElasticSearchServer);
-            RestRequest request = new RestRequest("/manifest/_search", RestSharp.Method.POST);
+            RestRequest request = new RestRequest(absolutePath, RestSharp.Method.POST);
             request.AddHeader("Content-Type", "application/json");
             request.AddParameter("text/json", json, ParameterType.RequestBody);
+
+            SortedDictionary<string, string> headers = AWS.Signature.SignatureHeader(
+                Amazon.RegionEndpoint.GetBySystemName(Config.ElasticSearchServerRegion),
+                new Uri(Config.ElasticSearchServer).Host,
+                "POST", json, absolutePath);
+            foreach (var entry in headers) request.AddHeader(entry.Key, entry.Value);
+
             IRestResponse res = await client.ExecuteTaskAsync(request);
 
             dynamic results = JObject.Parse(res.Content);
