@@ -29,11 +29,15 @@ using Hangfire.States;
 using Hangfire.Server;
 using Hangfire.Console;
 using System.Linq;
+using Microsoft.AspNetCore.SignalR;
 
 namespace forgeSample.Controllers
 {
     public class DataManagementCrawlerController : ControllerBase
     {
+        private IHubContext<ModelDerivativeHub> _hubContext;
+        public DataManagementCrawlerController(IHubContext<ModelDerivativeHub> hubContext) { _hubContext = hubContext; }
+
         /// <summary>
         /// GET TreeNode passing the ID
         /// </summary>
@@ -58,6 +62,7 @@ namespace forgeSample.Controllers
             // ToDo: check if hub is already indexed
 
             await IndexProjectsAsync(credentials, hubId, context);
+            await ModelDerivativeHub.NotifyHubComplete(_hubContext, hubId);
         }
 
         private async Task IndexProjectsAsync(Credentials credentials, string hubId, PerformContext context)
@@ -145,7 +150,13 @@ namespace forgeSample.Controllers
 
             context.WriteLine(string.Format("{0}: {1}", fileName, versionUrn));
 
-            metadataQueue.Create(() => ModelDerivativeController.ProcessFileAsync(credentials.UserId, hubId, projectId, folderUrn, itemUrn, versionUrn, fileName, null), state);
+            await ModelDerivativeHub.NotifyFileFound(_hubContext, hubId);
+            metadataQueue.Create(() => ProcessFile(credentials.UserId, hubId, projectId, folderUrn, itemUrn, versionUrn, fileName, null), state);
+        }
+
+        public async Task ProcessFile(string userId, string hubId, string projectId, string folderUrn, string itemUrn, string versionUrn, string fileName, PerformContext console){
+           await ModelDerivativeController.ProcessFileAsync(userId, hubId, projectId, folderUrn, itemUrn, versionUrn, fileName, console);
+           await ModelDerivativeHub.NotifyFileComplete(_hubContext, hubId);
         }
     }
 }

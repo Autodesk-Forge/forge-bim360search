@@ -28,12 +28,15 @@ using Newtonsoft.Json.Linq;
 using RestSharp;
 using Hangfire.Server;
 using Hangfire.Console;
+using Microsoft.AspNetCore.SignalR;
 
 namespace forgeSample.Controllers
 {
     [ApiController]
     public class ModelDerivativeController : ControllerBase
     {
+        private IHubContext<ModelDerivativeHub> _hubContext;
+        public ModelDerivativeController(IHubContext<ModelDerivativeHub> hubContext) { _hubContext = hubContext; }
 
         [HttpGet]
         [Route("api/forge/modelderivative/{urn}/thumbnail")]
@@ -48,11 +51,6 @@ namespace forgeSample.Controllers
             return File(await derivatives.GetThumbnailAsync(urn, 100, 100), "image/jpeg");
         }
 
-        /// <summary>
-        /// Start the translation job for a given urn
-        /// </summary>
-        /// <param name="urn"></param>
-        /// <returns></returns>
         public static async Task ProcessFileAsync(string userId, string hubId, string projectId, string folderUrn, string itemUrn, string versionUrn, string fileName, PerformContext console)
         {
             Credentials credentials = await Credentials.FromDatabaseAsync(userId);
@@ -73,9 +71,17 @@ namespace forgeSample.Controllers
             string versionUrn64 = Base64Encode(versionUrn);
             //console.WriteLine(string.Format("Retrieving data for {0}/{1}/{2}/{3}/{4}", hubId, projectId, folderUrn, itemUrn, versionUrn));
             //console.WriteLine(string.Format("https://docs.b360.autodesk.com/projects/{0}/folders/{1}/detail/viewer/items/{2}",projectId.Replace("b.", string.Empty), folderUrn, itemUrn));
-            dynamic manifest = await derivative.GetManifestAsync(versionUrn64);
-            if (manifest.status == "inprogress") {
-                throw new Exception("Translating..."); // force run it again
+            try
+            {
+                dynamic manifest = await derivative.GetManifestAsync(versionUrn64);
+                if (manifest.status == "inprogress")
+                {
+                    throw new Exception("Translating..."); // force run it again
+                }
+            }
+            catch (Exception ex)
+            {
+
             }
 
             dynamic metadata = await derivative.GetMetadataAsync(versionUrn64);
@@ -110,6 +116,32 @@ namespace forgeSample.Controllers
         {
             var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
             return System.Convert.ToBase64String(plainTextBytes).Replace("/", "_").Replace("=", string.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Class uses for SignalR
+    /// </summary>
+    public class ModelDerivativeHub : Microsoft.AspNetCore.SignalR.Hub
+    {
+        public string GetConnectionId() { return Context.ConnectionId; }
+
+        /// <summary>
+        /// Notify the client that the workitem is complete
+        /// </summary>
+        public async static Task NotifyFileFound(IHubContext<ModelDerivativeHub> context, string hubId)
+        {
+            await context.Clients.All.SendAsync("fileFound", hubId);
+        }
+
+        public async static Task NotifyFileComplete(IHubContext<ModelDerivativeHub> context, string hubId)
+        {
+            await context.Clients.All.SendAsync("fileComplete", hubId);
+        }
+
+        public async static Task NotifyHubComplete(IHubContext<ModelDerivativeHub> context, string hubId)
+        {
+            await context.Clients.All.SendAsync("hubComplete", hubId);
         }
     }
 }

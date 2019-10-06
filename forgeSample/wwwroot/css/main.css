@@ -48,3 +48,15 @@ body {
   height: 100px;
   border-bottom: 1px solid #C0C0C0;
 }
+
+.progress {
+  position: relative;
+}
+
+.progress span {
+    position: absolute;
+    display: block;
+    width: 100%;
+    color: black;
+    font-size:14px;
+}
