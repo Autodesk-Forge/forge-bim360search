@@ -72,21 +72,29 @@ namespace forgeSample.Controllers
             if (manifest.status == "inprogress") throw new Exception("Translating..."); // force run it again
 
 
-            dynamic metadata = await derivative.GetMetadataAsync(versionUrn64);
-            foreach (KeyValuePair<string, dynamic> metadataItem in new DynamicDictionaryItems(metadata.data.metadata))
             {
-                console.WriteLine(string.Format("View: {0}", (string)metadataItem.Value.guid));
-                dynamic properties = await derivative.GetModelviewPropertiesAsync(versionUrn64, metadataItem.Value.guid);
-                JArray collection = JObject.Parse(properties.ToString()).data.collection;
-
-                if (collection.Count > 0)
+                dynamic metadata = await derivative.GetMetadataAsync(versionUrn64);
+                foreach (KeyValuePair<string, dynamic> metadataItem in new DynamicDictionaryItems(metadata.data.metadata))
                 {
-                    dynamic viewProperties = new JObject();
-                    viewProperties.viewId = (string)metadataItem.Value.guid;
-                    viewProperties.collection = collection.ToString(Newtonsoft.Json.Formatting.None);
-                    document.metadata.Add(viewProperties);
+                    console.WriteLine(string.Format("View: {0}", (string)metadataItem.Value.guid));
+                    dynamic properties = await derivative.GetModelviewPropertiesAsync(versionUrn64, metadataItem.Value.guid);
+                    JArray collection = JObject.Parse(properties.ToString()).data.collection;
+
+                    if (collection.Count > 0)
+                    {
+                        dynamic viewProperties = new JObject();
+                        viewProperties.viewId = (string)metadataItem.Value.guid;
+                        viewProperties.collection = collection.ToString(Newtonsoft.Json.Formatting.None);
+                        document.metadata.Add(viewProperties);
+                    }
+                    // need to reduce memory consumption on Heroku
+                    GC.Collect(2, GCCollectionMode.Forced, true);
+                    GC.WaitForPendingFinalizers();
                 }
             }
+            // need to reduce memory consumption on Heroku
+            GC.Collect(2, GCCollectionMode.Forced, true);
+            GC.WaitForPendingFinalizers();
 
             string json = (string)document.ToString(Newtonsoft.Json.Formatting.None);
             string absolutePath = string.Format("/manifest/_doc/{0}", Base64Encode(itemUrn));
@@ -106,7 +114,9 @@ namespace forgeSample.Controllers
 
             console.WriteLine(string.Format("Status: {0}", res.StatusCode.ToString()));
 
-            System.GC.Collect();
+            // need to reduce memory consumption on Heroku
+            GC.Collect(2, GCCollectionMode.Forced, true);
+            GC.WaitForPendingFinalizers();
         }
 
         public static string Base64Encode(string plainText)
