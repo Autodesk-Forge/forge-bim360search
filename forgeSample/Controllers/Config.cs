@@ -25,24 +25,53 @@ using Autodesk.Forge.Model;
 using Newtonsoft.Json.Linq;
 using System.Net;
 using System.Linq;
+using Amazon.Runtime;
+using Amazon.SimpleSystemsManagement.Model;
+using Amazon.SimpleSystemsManagement;
 
 namespace forgeSample
 {
     public class Config
     {
+        public static async Task<string> GetForgeKeysSSM(string SSMkey)
+        {
+            try
+            {
+                AWSCredentials awsCredentials = new InstanceProfileAWSCredentials();
+                GetParameterRequest parameterRequest = new GetParameterRequest() { Name = SSMkey };
+                AmazonSimpleSystemsManagementClient client = new AmazonSimpleSystemsManagementClient(awsCredentials, Amazon.RegionEndpoint.GetBySystemName(Environment.GetEnvironmentVariable("AWS_REGION")));
+                GetParameterResponse response = await client.GetParameterAsync(parameterRequest);
+                return response.Parameter.Value;
+            }
+            catch (Exception e)
+            {
+                return string.Empty; //throw new Exception("Cannot obtain Amazon SSM value for " + SSMkey, e);
+            }
+        }
+
         /// <summary>
-        /// Reads appsettings from web.config
+        /// Reads appsettings from web.config or AWS SSM Parameter Store
         /// </summary>
         public static string GetAppSetting(string settingKey)
         {
-            return Environment.GetEnvironmentVariable(settingKey);
+            string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            if (environment == "Development")
+            {
+                return Environment.GetEnvironmentVariable(settingKey);
+            }
+            else if (environment == "Production")
+            {
+                string SSMkey = Environment.GetEnvironmentVariable(settingKey);
+                return GetForgeKeysSSM(SSMkey).GetAwaiter().GetResult();
+            }
+            return string.Empty;
         }
 
         public static string ConnectionString
         {
             get
             {
-                return Config.GetAppSetting("OAUTH_DATABASE");//.Split("/").First();
+                return Config.GetAppSetting("OAUTH_DATABASE");
             }
         }
 
@@ -79,11 +108,11 @@ namespace forgeSample
             }
         }
 
-        public static string ElasticSearchServerRegion
+        public static string AWSRegion
         {
             get
             {
-                return Config.GetAppSetting("ELASTIC_SEARCH_SERVER_REGION");
+                return Config.GetAppSetting("AWS_REGION");
             }
         }
 

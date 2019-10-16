@@ -45,11 +45,14 @@ namespace forgeSample.Controllers
             request.AddHeader("Content-Type", "application/json");
             request.AddParameter("text/json", json, ParameterType.RequestBody);
 
-            SortedDictionary<string, string> headers = AWS.Signature.SignatureHeader(
-                Amazon.RegionEndpoint.GetBySystemName(Config.ElasticSearchServerRegion),
-                new Uri(Config.ElasticSearchServer).Host,
-                "POST", json, absolutePath);
-            foreach (var entry in headers) request.AddHeader(entry.Key, entry.Value);
+            if (!string.IsNullOrEmpty(Config.AWSKey) && !string.IsNullOrEmpty(Config.AWSSecret))
+            {
+                SortedDictionary<string, string> headers = AWS.Signature.SignatureHeader(
+                    Amazon.RegionEndpoint.GetBySystemName(Config.AWSRegion),
+                    new Uri(Config.ElasticSearchServer).Host,
+                    "POST", json, absolutePath);
+                foreach (var entry in headers) request.AddHeader(entry.Key, entry.Value);
+            }
 
             IRestResponse res = await client.ExecuteTaskAsync(request);
 

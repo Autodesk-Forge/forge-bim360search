@@ -152,6 +152,9 @@ namespace forgeSample.Controllers
 
             await ModelDerivativeHub.NotifyFileFound(_hubContext, hubId);
             metadataQueue.Create(() => ProcessFile(credentials.UserId, hubId, projectId, folderUrn, itemUrn, versionUrn, fileName, null), state);
+
+            GC.Collect(2, GCCollectionMode.Forced, true);
+            GC.WaitForPendingFinalizers();
         }
 
         public async Task ProcessFile(string userId, string hubId, string projectId, string folderUrn, string itemUrn, string versionUrn, string fileName, PerformContext console){

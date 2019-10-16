@@ -34,8 +34,6 @@ namespace forgeSample.Controllers
         private static MongoClient _client = null;
         private static IMongoDatabase _database = null;
 
-        //private static string OAuthDatabase { get { return Config.GetAppSetting("OAUTH_DATABASE"); } }
-
         private static MongoClient Client
         {
             get
