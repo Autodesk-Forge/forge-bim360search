@@ -55,11 +55,12 @@ namespace forgeSample
         public static string GetAppSetting(string settingKey)
         {
             string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            if (environment == "Development")
+            bool isHeroku = (Environment.GetEnvironmentVariable("FORGE_CALLBACK_URL").IndexOf("herokuapp.com") > 0);
+            if (environment == "Development" || isHeroku) // localhost (DEV) or Heroku
             {
                 return Environment.GetEnvironmentVariable(settingKey);
             }
-            else if (environment == "Production")
+            else if (environment == "Production") // AWS Only
             {
                 string SSMkey = Environment.GetEnvironmentVariable(settingKey);
                 return GetForgeKeysSSM(SSMkey).GetAwaiter().GetResult();

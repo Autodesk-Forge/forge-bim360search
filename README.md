@@ -72,7 +72,7 @@ Right-click on the project, then go to **Debug**. Adjust the settings as shown b
 - FORGE\_WEBHOOK_URL: `http://YOUR HOST OR NGROK ADDRESS`
 - OAUTH\_DATABASE: `mongodb+srv://<username>:<password>@clusterX-a1b2c4.mongodb.net/bim360search?retryWrites=true`
 - ELASTIC\_SEARCH\_SERVER: `https://yourSearchEndpoint.region.es.amazonaws.com`
-- ELASTIC\_SEARCH\_SERVER_REGION: `e.g. us-east-1`
+- AWS\_REGION: `e.g. us-east-1`
 - AWS\_ACCESS_KEY: `your AWS access key here`
 - AWS\_SECRET_KEY: `your AWS secret key here`
 
@@ -96,7 +96,7 @@ At the `.vscode\launch.json`, find the env vars and add your Forge Client ID, Se
     "FORGE_WEBHOOK_URL": "http://YOUR HOST OR NGROK ADDRESS",
     "OAUTH_DATABASE": "mongodb+srv://<username>:<password>@clusterX-a1b2c4.mongodb.net/bim360search?retryWrites=true",
     "ELASTIC_SEARCH_SERVER": "https://search-yourElasticSearch.region.es.amazonaws.com",
-    "ELASTIC_SEARCH_SERVER_REGION": "us-east-1",
+    "AWS_REGION": "us-east-1",
     "AWS_ACCESS_KEY": "your AWS access key here",
     "AWS_SECRET_KEY": "your AWS secret key here"
 },
@@ -105,6 +105,8 @@ At the `.vscode\launch.json`, find the env vars and add your Forge Client ID, Se
 Open `http://localhost:3000` to start the app. Select **Index my BIM 360 Account** before using (this process may take a while). 
 
 ## Deployment
+
+> Due to memory usage, it's likely that this sample will **crash** on Heroku free & hobby tier (limited to 512Mb of memory).
 
 To deploy this application to Heroku, the **Callback URL** for Forge must use your `.herokuapp.com` address. After clicking on the button below, at the Heroku Create New App page, set your Client ID, Secret and Callback URL for Forge.
 
