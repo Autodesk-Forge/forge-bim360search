@@ -115,7 +115,7 @@ namespace forgeSample.Controllers
 
             IRestResponse res = await client.ExecuteTaskAsync(request);
 
-            console.WriteLine(string.Format("Status: {0}", res.StatusCode.ToString()));
+            console.WriteLine(string.Format("Submit to elasticsearch status: {0}", res.StatusCode.ToString()));
 
             // need to reduce memory consumption on Heroku
             GC.Collect(2, GCCollectionMode.Forced, true);

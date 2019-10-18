@@ -98,7 +98,7 @@ namespace forgeSample.Controllers
         [Route("api/forge/clientid")] // see Web.Config FORGE_CALLBACK_URL variable
         public dynamic GetClientID()
         {
-            return new { id = Config.GetAppSetting("FORGE_CLIENT_ID") };
+            return new { id = (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" ? Config.GetAppSetting("FORGE_CLIENT_ID") : "Demo only, please deploy your instance of this sample.") };
         }
     }
 

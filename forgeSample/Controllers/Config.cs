@@ -17,55 +17,18 @@
 /////////////////////////////////////////////////////////////////////
 
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Autodesk.Forge;
-using Autodesk.Forge.Model;
-using Newtonsoft.Json.Linq;
-using System.Net;
 using System.Linq;
-using Amazon.Runtime;
-using Amazon.SimpleSystemsManagement.Model;
-using Amazon.SimpleSystemsManagement;
 
 namespace forgeSample
 {
     public class Config
     {
-        public static async Task<string> GetForgeKeysSSM(string SSMkey)
-        {
-            try
-            {
-                AWSCredentials awsCredentials = new InstanceProfileAWSCredentials();
-                GetParameterRequest parameterRequest = new GetParameterRequest() { Name = SSMkey };
-                AmazonSimpleSystemsManagementClient client = new AmazonSimpleSystemsManagementClient(awsCredentials, Amazon.RegionEndpoint.GetBySystemName(Environment.GetEnvironmentVariable("AWS_REGION")));
-                GetParameterResponse response = await client.GetParameterAsync(parameterRequest);
-                return response.Parameter.Value;
-            }
-            catch (Exception e)
-            {
-                return string.Empty; //throw new Exception("Cannot obtain Amazon SSM value for " + SSMkey, e);
-            }
-        }
-
         /// <summary>
         /// Reads appsettings from web.config or AWS SSM Parameter Store
         /// </summary>
         public static string GetAppSetting(string settingKey)
         {
-            string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            bool isHeroku = (Environment.GetEnvironmentVariable("FORGE_CALLBACK_URL").IndexOf("herokuapp.com") > 0);
-            if (environment == "Development" || isHeroku) // localhost (DEV) or Heroku
-            {
-                return Environment.GetEnvironmentVariable(settingKey);
-            }
-            else if (environment == "Production") // AWS Only
-            {
-                string SSMkey = Environment.GetEnvironmentVariable(settingKey);
-                return GetForgeKeysSSM(SSMkey).GetAwaiter().GetResult();
-            }
-            return string.Empty;
+            return Environment.GetEnvironmentVariable(settingKey);
         }
 
         public static string ConnectionString
