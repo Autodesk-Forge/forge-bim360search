@@ -33,8 +33,8 @@ namespace forgeSample.Controllers
     [ApiController]
     public class ModelDerivativeController : ControllerBase
     {
-        private IHubContext<ModelDerivativeHub> _hubContext;
-        public ModelDerivativeController(IHubContext<ModelDerivativeHub> hubContext) { _hubContext = hubContext; }
+        //private static IHubContext<ModelDerivativeHub> _hubContext;
+        //public ModelDerivativeController(IHubContext<ModelDerivativeHub> hubContext) { _hubContext = hubContext; }
 
         [HttpGet]
         [Route("api/forge/modelderivative/{urn}/thumbnail")]

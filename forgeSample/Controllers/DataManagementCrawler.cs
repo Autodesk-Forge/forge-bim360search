@@ -35,7 +35,7 @@ namespace forgeSample.Controllers
 {
     public class DataManagementCrawlerController : ControllerBase
     {
-        private IHubContext<ModelDerivativeHub> _hubContext;
+        private static IHubContext<ModelDerivativeHub> _hubContext;
         public DataManagementCrawlerController(IHubContext<ModelDerivativeHub> hubContext)
         {
             _hubContext = hubContext;
