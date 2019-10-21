@@ -36,7 +36,11 @@ namespace forgeSample.Controllers
     public class DataManagementCrawlerController : ControllerBase
     {
         private IHubContext<ModelDerivativeHub> _hubContext;
-        public DataManagementCrawlerController(IHubContext<ModelDerivativeHub> hubContext) { _hubContext = hubContext; }
+        public DataManagementCrawlerController(IHubContext<ModelDerivativeHub> hubContext)
+        {
+            _hubContext = hubContext;
+            GC.KeepAlive(_hubContext);
+        }
 
         /// <summary>
         /// GET TreeNode passing the ID
@@ -157,9 +161,10 @@ namespace forgeSample.Controllers
             //GC.WaitForPendingFinalizers();
         }
 
-        public async Task ProcessFile(string userId, string hubId, string projectId, string folderUrn, string itemUrn, string versionUrn, string fileName, PerformContext console){
-           await ModelDerivativeController.ProcessFileAsync(userId, hubId, projectId, folderUrn, itemUrn, versionUrn, fileName, console);
-           await ModelDerivativeHub.NotifyFileComplete(_hubContext, hubId);
+        public async Task ProcessFile(string userId, string hubId, string projectId, string folderUrn, string itemUrn, string versionUrn, string fileName, PerformContext console)
+        {
+            await ModelDerivativeController.ProcessFileAsync(userId, hubId, projectId, folderUrn, itemUrn, versionUrn, fileName, console);
+            await ModelDerivativeHub.NotifyFileComplete(_hubContext, hubId);
         }
     }
 }
