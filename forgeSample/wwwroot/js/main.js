@@ -10,7 +10,7 @@ function getAccounts(callback) {
                     $(o).html(hub.name);
                     $("#bim360accounts").append(o);
                 })
-                
+
                 if (hubs.length == 1) {
                     $("#bim360accounts").val(hubs[0].id);
                 }
@@ -65,5 +65,14 @@ $(document).ready(function () {
                 location.href = url;
             }
         });
-    })
+    });
+
+    $(document).keypress(function (e) {
+        if (e.keyCode === 13) {
+            if ($("#searchString").is(":focus")) {
+                $("#doSearch").click();
+            }
+            return false;
+        }
+    });
 });
