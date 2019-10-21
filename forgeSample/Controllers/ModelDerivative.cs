@@ -33,9 +33,6 @@ namespace forgeSample.Controllers
     [ApiController]
     public class ModelDerivativeController : ControllerBase
     {
-        //private static IHubContext<ModelDerivativeHub> _hubContext;
-        //public ModelDerivativeController(IHubContext<ModelDerivativeHub> hubContext) { _hubContext = hubContext; }
-
         [HttpGet]
         [Route("api/forge/modelderivative/{urn}/thumbnail")]
         public async Task<IActionResult> GetThumbnail(string urn)
@@ -87,14 +84,8 @@ namespace forgeSample.Controllers
                         viewProperties.collection = collection.ToString(Newtonsoft.Json.Formatting.None);
                         document.metadata.Add(viewProperties);
                     }
-                    // need to reduce memory consumption on Heroku
-                    //GC.Collect(2, GCCollectionMode.Forced, true);
-                    //GC.WaitForPendingFinalizers();
                 }
             }
-            // need to reduce memory consumption on Heroku
-            //GC.Collect(2, GCCollectionMode.Forced, true);
-            //GC.WaitForPendingFinalizers();
 
             string json = (string)document.ToString(Newtonsoft.Json.Formatting.None);
             string absolutePath = string.Format("/manifest/_doc/{0}", Base64Encode(itemUrn));
@@ -116,10 +107,6 @@ namespace forgeSample.Controllers
             IRestResponse res = await client.ExecuteTaskAsync(request);
 
             console.WriteLine(string.Format("Submit to elasticsearch status: {0}", res.StatusCode.ToString()));
-
-            // need to reduce memory consumption on Heroku
-            //GC.Collect(2, GCCollectionMode.Forced, true);
-            //GC.WaitForPendingFinalizers();
         }
 
         public static string Base64Encode(string plainText)

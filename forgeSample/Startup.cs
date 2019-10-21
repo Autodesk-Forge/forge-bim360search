@@ -17,24 +17,16 @@
 /////////////////////////////////////////////////////////////////////
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.Console;
 using Hangfire.Mongo;
-using Hangfire.Mongo.Database;
 using MongoDB.Driver;
-using Hangfire.MemoryStorage;
 using Hangfire.Common;
 using Hangfire.States;
 using Hangfire.Storage;
@@ -53,7 +45,18 @@ namespace forgeSample
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+            
+            /*services.AddSingleton<IMongoClient>(provider =>
+            {
+                MongoClientSettings settings = MongoClientSettings.FromUrl(MongoUrl.Create(Config.ConnectionString));
+                settings.MaxConnectionPoolSize = 200;
+                settings.MaxConnectionIdleTime = TimeSpan.FromMinutes(1);
+                settings.ConnectTimeout = TimeSpan.FromSeconds(55);
+                settings.SocketTimeout = TimeSpan.FromSeconds(55);
+                return new MongoClient(settings);
+            });*/
+
+            /*if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             {
                 // memory storage of jobs
                 services.AddHangfire(config =>
@@ -62,10 +65,9 @@ namespace forgeSample
                     config.UseMemoryStorage(); // for local testing
                 });
             }
-            else
+            else*/
             {
                 // Mongodb storage of jobs
-                Console.WriteLine(string.Format("Connecting to {0}", Config.DatabaseName));
                 services.AddHangfire(config =>
                 {
                     config.UseConsole();
@@ -104,7 +106,17 @@ namespace forgeSample
             app.UseHttpsRedirection();
             app.UseMvc();
 
-             // Hangfire
+            /*var mongoclient = (IMongoClient)app.ApplicationServices.GetRequiredService(typeof(IMongoClient));
+            GlobalConfiguration.Configuration.UseMongoStorage(mongoclient.Settings, Config.DatabaseName, new MongoStorageOptions()
+            {
+                CheckConnection = false,
+                MigrationOptions = new MongoMigrationOptions()
+                {
+                    Strategy = MongoMigrationStrategy.Drop
+                }
+            });*/
+
+            // Hangfire
             app.UseHangfireDashboard("/dashboard", new DashboardOptions
             {
                 Authorization = new[] { new MyAuthorizationFilter() },
