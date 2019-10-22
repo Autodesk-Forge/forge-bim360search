@@ -26,10 +26,10 @@ using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.Console;
 using Hangfire.Mongo;
-using MongoDB.Driver;
 using Hangfire.Common;
 using Hangfire.States;
 using Hangfire.Storage;
+using Hangfire.MemoryStorage;
 
 namespace forgeSample
 {
@@ -45,18 +45,7 @@ namespace forgeSample
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            
-            /*services.AddSingleton<IMongoClient>(provider =>
-            {
-                MongoClientSettings settings = MongoClientSettings.FromUrl(MongoUrl.Create(Config.ConnectionString));
-                settings.MaxConnectionPoolSize = 200;
-                settings.MaxConnectionIdleTime = TimeSpan.FromMinutes(1);
-                settings.ConnectTimeout = TimeSpan.FromSeconds(55);
-                settings.SocketTimeout = TimeSpan.FromSeconds(55);
-                return new MongoClient(settings);
-            });*/
-
-            /*if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             {
                 // memory storage of jobs
                 services.AddHangfire(config =>
@@ -65,7 +54,7 @@ namespace forgeSample
                     config.UseMemoryStorage(); // for local testing
                 });
             }
-            else*/
+            else
             {
                 // Mongodb storage of jobs
                 services.AddHangfire(config =>
@@ -105,16 +94,6 @@ namespace forgeSample
             app.UseStaticFiles();
             app.UseHttpsRedirection();
             app.UseMvc();
-
-            /*var mongoclient = (IMongoClient)app.ApplicationServices.GetRequiredService(typeof(IMongoClient));
-            GlobalConfiguration.Configuration.UseMongoStorage(mongoclient.Settings, Config.DatabaseName, new MongoStorageOptions()
-            {
-                CheckConnection = false,
-                MigrationOptions = new MongoMigrationOptions()
-                {
-                    Strategy = MongoMigrationStrategy.Drop
-                }
-            });*/
 
             // Hangfire
             app.UseHangfireDashboard("/dashboard", new DashboardOptions
