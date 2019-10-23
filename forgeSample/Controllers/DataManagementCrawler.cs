@@ -171,7 +171,7 @@ namespace forgeSample.Controllers
             if (res.StatusCode == HttpStatusCode.OK)
             {
                 context.WriteLine(string.Format("{0}: already indexed, skip", fileName));
-                //return;
+                return;
             }
 
             context.WriteLine(string.Format("{0}: {1}", fileName, versionUrn));
