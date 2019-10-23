@@ -43,7 +43,10 @@ namespace forgeSample.Controllers
             DerivativesApi derivatives = new DerivativesApi();
             derivatives.Configuration.AccessToken = credentials.TokenInternal;
 
-            return File(await derivatives.GetThumbnailAsync(urn, 100, 100), "image/jpeg");
+            dynamic thumb = await derivatives.GetThumbnailAsync(urn, 100, 100);
+            if (thumb == null) return Ok();
+
+            return File(thumb, "image/jpeg");
         }
 
         public static async Task ProcessFileAsync(string userId, string hubId, string projectId, string folderUrn, string itemUrn, string versionUrn, string fileName, PerformContext console)
@@ -73,8 +76,13 @@ namespace forgeSample.Controllers
                 dynamic metadata = await derivative.GetMetadataAsync(versionUrn64);
                 foreach (KeyValuePair<string, dynamic> metadataItem in new DynamicDictionaryItems(metadata.data.metadata))
                 {
-                    console.WriteLine(string.Format("View: {0}", (string)metadataItem.Value.guid));
                     dynamic properties = await derivative.GetModelviewPropertiesAsync(versionUrn64, metadataItem.Value.guid);
+                    if (properties == null)
+                    {
+                        console.WriteLine("Model not ready, will retry");
+                        throw new Exception("Model not ready...");
+                    }
+                    console.WriteLine(string.Format("View: {0}", (string)metadataItem.Value.guid));
                     JArray collection = JObject.Parse(properties.ToString()).data.collection;
 
                     if (collection.Count > 0)

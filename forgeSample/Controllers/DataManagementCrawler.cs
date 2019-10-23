@@ -30,6 +30,7 @@ using Hangfire.Server;
 using Hangfire.Console;
 using System.Linq;
 using Microsoft.AspNetCore.SignalR;
+using RestSharp;
 
 namespace forgeSample.Controllers
 {
@@ -151,6 +152,27 @@ namespace forgeSample.Controllers
             string extension = fileName.Split(".").Last();
 
             if (extension != "dwg") return; // only DWG for now...
+
+            string absolutePath = string.Format("/manifest/_doc/{0}", ModelDerivativeController.Base64Encode(itemUrn));
+
+            RestClient client = new RestClient(Config.ElasticSearchServer);
+            RestRequest request = new RestRequest(absolutePath, RestSharp.Method.GET);
+
+            if (!string.IsNullOrEmpty(Config.AWSKey) && !string.IsNullOrEmpty(Config.AWSSecret))
+            {
+                SortedDictionary<string, string> headers = AWS.Signature.SignatureHeader(
+                    Amazon.RegionEndpoint.GetBySystemName(Config.AWSRegion),
+                    new Uri(Config.ElasticSearchServer).Host,
+                    "GET", string.Empty, absolutePath);
+                foreach (var entry in headers) request.AddHeader(entry.Key, entry.Value);
+            }
+
+            IRestResponse res = await client.ExecuteTaskAsync(request);
+            if (res.StatusCode == HttpStatusCode.OK)
+            {
+                context.WriteLine(string.Format("{0}: already indexed, skip", fileName));
+                //return;
+            }
 
             context.WriteLine(string.Format("{0}: {1}", fileName, versionUrn));
 
