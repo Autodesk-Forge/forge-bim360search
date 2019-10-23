@@ -27,6 +27,8 @@ using RestSharp;
 using Hangfire.Server;
 using Hangfire.Console;
 using Microsoft.AspNetCore.SignalR;
+using System.IO.Compression;
+using System.IO;
 
 namespace forgeSample.Controllers
 {
@@ -65,14 +67,27 @@ namespace forgeSample.Controllers
             document.itemUrn = itemUrn;
             document.versionUrn = versionUrn;
             document.fileName = fileName;
-            document.metadata = new JArray();
+            //document.metadata = new JArray();
 
             string versionUrn64 = Base64Encode(versionUrn);
             dynamic manifest = await derivative.GetManifestAsync(versionUrn64);
             if (manifest.status == "inprogress") throw new Exception("Translating..."); // force run it again
 
-
+            string propertyValues = string.Empty;
             {
+                IRestClient forgeClient = new RestClient("https://developer.api.autodesk.com/");
+                RestRequest forgeRequest = new RestRequest("/derivativeservice/v2/derivatives/urn:adsk.viewing:fs.file:{urn}/output/objects_vals.json.gz", Method.GET);
+                forgeRequest.AddParameter("urn", versionUrn64, ParameterType.UrlSegment);
+                forgeRequest.AddHeader("Authorization", "Bearer " + credentials.TokenInternal);
+                forgeRequest.AddHeader("Accept-Encoding", "gzip, deflate");
+                IRestResponse response = await forgeClient.ExecuteTaskAsync(forgeRequest);
+                using (GZipStream gzip = new GZipStream(new MemoryStream(response.RawBytes), CompressionMode.Decompress))
+                using (var fileStream = new StreamReader(gzip))
+                    document.metadata = System.Text.RegularExpressions.Regex.Replace(fileStream.ReadToEnd(), @"\s+", string.Empty);
+            }
+
+
+            /*{
                 dynamic metadata = await derivative.GetMetadataAsync(versionUrn64);
                 foreach (KeyValuePair<string, dynamic> metadataItem in new DynamicDictionaryItems(metadata.data.metadata))
                 {
@@ -93,15 +108,15 @@ namespace forgeSample.Controllers
                         document.metadata.Add(viewProperties);
                     }
                 }
-            }
+            }*/
 
             string json = (string)document.ToString(Newtonsoft.Json.Formatting.None);
             string absolutePath = string.Format("/manifest/_doc/{0}", Base64Encode(itemUrn));
 
-            RestClient client = new RestClient(Config.ElasticSearchServer);
-            RestRequest request = new RestRequest(absolutePath, RestSharp.Method.POST);
-            request.AddHeader("Content-Type", "application/json");
-            request.AddParameter("text/json", json, ParameterType.RequestBody);
+            RestClient elasticSearchclient = new RestClient(Config.ElasticSearchServer);
+            RestRequest elasticSearchRequest = new RestRequest(absolutePath, RestSharp.Method.POST);
+            elasticSearchRequest.AddHeader("Content-Type", "application/json");
+            elasticSearchRequest.AddParameter("text/json", json, ParameterType.RequestBody);
 
             if (!string.IsNullOrEmpty(Config.AWSKey) && !string.IsNullOrEmpty(Config.AWSSecret))
             {
@@ -109,10 +124,10 @@ namespace forgeSample.Controllers
                     Amazon.RegionEndpoint.GetBySystemName(Config.AWSRegion),
                     new Uri(Config.ElasticSearchServer).Host,
                     "POST", json, absolutePath);
-                foreach (var entry in headers) request.AddHeader(entry.Key, entry.Value);
+                foreach (var entry in headers) elasticSearchRequest.AddHeader(entry.Key, entry.Value);
             }
 
-            IRestResponse res = await client.ExecuteTaskAsync(request);
+            IRestResponse res = await elasticSearchclient.ExecuteTaskAsync(elasticSearchRequest);
 
             console.WriteLine(string.Format("Submit to elasticsearch status: {0}", res.StatusCode.ToString()));
         }

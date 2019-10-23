@@ -171,6 +171,7 @@ namespace forgeSample.Controllers
             if (res.StatusCode == HttpStatusCode.OK)
             {
                 context.WriteLine(string.Format("{0}: already indexed, skip", fileName));
+                System.Threading.Thread.Sleep(1000); // otherwise we'll reach the rate limit...
                 return;
             }
 
