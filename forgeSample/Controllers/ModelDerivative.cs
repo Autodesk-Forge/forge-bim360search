@@ -67,7 +67,7 @@ namespace forgeSample.Controllers
             document.itemUrn = itemUrn;
             document.versionUrn = versionUrn;
             document.fileName = fileName;
-            //document.metadata = new JArray();
+            document.metadata = new JArray();
 
             string versionUrn64 = Base64Encode(versionUrn);
             dynamic manifest = await derivative.GetManifestAsync(versionUrn64);
@@ -81,9 +81,19 @@ namespace forgeSample.Controllers
                 forgeRequest.AddHeader("Authorization", "Bearer " + credentials.TokenInternal);
                 forgeRequest.AddHeader("Accept-Encoding", "gzip, deflate");
                 IRestResponse response = await forgeClient.ExecuteTaskAsync(forgeRequest);
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    console.WriteLine("Model not ready, will retry");
+                    throw new Exception("Model not ready...");
+                }
                 using (GZipStream gzip = new GZipStream(new MemoryStream(response.RawBytes), CompressionMode.Decompress))
                 using (var fileStream = new StreamReader(gzip))
-                    document.metadata = System.Text.RegularExpressions.Regex.Replace(fileStream.ReadToEnd(), @"\s+", string.Empty);
+                {
+                    dynamic viewProperties = new JObject();
+                    viewProperties.viewId = "viewer";
+                    viewProperties.collection = System.Text.RegularExpressions.Regex.Replace(fileStream.ReadToEnd(), @"\s+", string.Empty);
+                    document.metadata.Add(viewProperties);
+                }
             }
 
 
