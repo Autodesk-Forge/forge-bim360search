@@ -82,8 +82,11 @@ namespace forgeSample.Controllers
                 var folders = await projectsApi.GetProjectTopFoldersAsync(hubId, projectInfo.Value.id);
                 foreach (KeyValuePair<string, dynamic> folder in new DynamicDictionaryItems(folders.data))
                 {
-                    if (folder.Value.attributes.displayName != "Project Files") continue;
-                    await GetFolderContentsAsync(credentials, hubId, folder.Value.links.self.href, context);
+                    // Project File folder show Files, Plans folder show items:autodesk.bim360:Document          
+                    // for this sample let's focus on Project Files only      
+                    try { if (!folder.Value.attributes.extension.data.visibleTypes.ToString().Contains("items:autodesk.bim360:File")) continue; }
+                    catch { continue; } // if we cannot get visibleTypes, maybe it's Recycle, so let's skip...
+                    await GetFolderContentsAsync(credentials.UserId, hubId, folder.Value.links.self.href, context);
 
                     // 
                     string[] hrefParams = folder.Value.links.self.href.Split('/');
@@ -98,8 +101,10 @@ namespace forgeSample.Controllers
 
         }
 
-        public async Task GetFolderContentsAsync(Credentials credentials, string hubId, string folderHref, PerformContext context)
+        public async Task GetFolderContentsAsync(string userId, string hubId, string folderHref, PerformContext context)
         {
+            Credentials credentials = await Credentials.FromDatabaseAsync(userId);
+
             // the API SDK
             FoldersApi folderApi = new FoldersApi();
             folderApi.Configuration.AccessToken = credentials.TokenInternal;
@@ -121,7 +126,7 @@ namespace forgeSample.Controllers
                     BackgroundJobClient indexQueue = new BackgroundJobClient();
                     IState state = new EnqueuedState("index");
                     string subFolderHref = folderContentItem.Value.links.self.href;
-                    indexQueue.Create(() => GetFolderContentsAsync(credentials, hubId, subFolderHref, null), state);
+                    indexQueue.Create(() => GetFolderContentsAsync(credentials.UserId, hubId, subFolderHref, null), state);
                 }
                 else
                 {
