@@ -73,7 +73,9 @@ namespace forgeSample.Controllers
             dynamic manifest = await derivative.GetManifestAsync(versionUrn64);
             if (manifest.status == "inprogress") throw new Exception("Translating..."); // force run it again
 
-            string propertyValues = string.Empty;
+            // this approach uses the Viewer propertyDatabase, which is a non-supported way of accessing the model metadata
+            // it will return the non-duplicated list of attributes values (not the attribute type)
+            // as we don't want to manipulate it, just search, it doesn't matter if this list changes its format
             {
                 IRestClient forgeClient = new RestClient("https://developer.api.autodesk.com/");
                 RestRequest forgeRequest = new RestRequest("/derivativeservice/v2/derivatives/urn:adsk.viewing:fs.file:{urn}/output/objects_vals.json.gz", Method.GET);
@@ -91,12 +93,14 @@ namespace forgeSample.Controllers
                 {
                     dynamic viewProperties = new JObject();
                     viewProperties.viewId = "viewer";
-                    viewProperties.collection = System.Text.RegularExpressions.Regex.Replace(fileStream.ReadToEnd(), @"\s+", string.Empty);
+                    viewProperties.collection = System.Text.RegularExpressions.Regex.Replace(fileStream.ReadToEnd(), @"\n", string.Empty);
                     document.metadata.Add(viewProperties);
                 }
             }
 
 
+            // as an alternative solution, using supported APIs, one could get the complete metadata JSON
+            // but that results in more data that we don't need for search, like attribute names
             /*{
                 dynamic metadata = await derivative.GetMetadataAsync(versionUrn64);
                 foreach (KeyValuePair<string, dynamic> metadataItem in new DynamicDictionaryItems(metadata.data.metadata))

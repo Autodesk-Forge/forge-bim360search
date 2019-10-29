@@ -44,7 +44,7 @@ Create or use your AWS Account. Go to [Elasticseach](https://console.aws.amazon.
 
 - Step 1: you may consider using `Development and testing`:`Development and testing`. 
 - Step 2: type your`Elasticsearch domain name`. Other settings as default or adjust as needed.
-- Step 3: depending on your `Network configuration`, or select `Public access`. Select the appropriate `Access policy`, this sample uses **Allow or deny access to one or more IAM users**. Select the appropriate user. You may choose to allow open access.
+- Step 3: depending on your `Network configuration`, or select `Public access`. Select the appropriate `Access policy`, this sample uses **Allow or deny access to one or more IAM users**. Select the appropriate user. This step requires a IAM user.
 - Step 4: review and confirm.
 
 The creating may take a few minutes, after that take note of the `Endpoint`. 
@@ -68,11 +68,12 @@ Right-click on the project, then go to **Debug**. Adjust the settings as shown b
 - ASPNETCORE_ENVIRONMENT: `Development`
 - FORGE\_CLIENT_ID: `your id here`
 - FORGE\_CLIENT_SECRET: `your secret here`
-- FORGE\_CALLBACK_URL: `http://localhost:3000/api/forge/callback/oauth`
-- FORGE\_WEBHOOK_URL: `http://YOUR HOST OR NGROK ADDRESS`
+- FORGE\_CALLBACK\_URL: `http://localhost:3000/api/forge/callback/oauth`
+- FORGE\_WEBHOOK\_URL: `http://YOUR HOST OR NGROK ADDRESS`
+- FORGE\_PARALLEL\_JOBS: `Number of parallels jobs to get metadata, this affects the memory usage`
 - OAUTH\_DATABASE: `mongodb+srv://<username>:<password>@clusterX-a1b2c4.mongodb.net/bim360search?retryWrites=true`
 - ELASTIC\_SEARCH\_SERVER: `https://yourSearchEndpoint.region.es.amazonaws.com`
-- AWS\_REGION: `e.g. us-east-1`
+- AWS\_REGION: `where the Elastic Search is running, e.g. us-east-1`
 - AWS\_ACCESS_KEY: `your AWS access key here`
 - AWS\_SECRET_KEY: `your AWS secret key here`
 
@@ -94,19 +95,20 @@ At the `.vscode\launch.json`, find the env vars and add your Forge Client ID, Se
     "FORGE_CLIENT_SECRET": "your secret here",
     "FORGE_CALLBACK_URL": "http://localhost:3000/api/forge/callback/oauth",
     "FORGE_WEBHOOK_URL": "http://YOUR HOST OR NGROK ADDRESS",
+    "FORGE_PARALLEL_JOBS": "20",
     "OAUTH_DATABASE": "mongodb+srv://<username>:<password>@clusterX-a1b2c4.mongodb.net/bim360search?retryWrites=true",
     "ELASTIC_SEARCH_SERVER": "https://search-yourElasticSearch.region.es.amazonaws.com",
-    "AWS_REGION": "us-east-1",
+    "AWS_REGION": "where the Elastic Search is running, e.g. us-east-1",
     "AWS_ACCESS_KEY": "your AWS access key here",
     "AWS_SECRET_KEY": "your AWS secret key here"
 },
 ```
 
-Open `http://localhost:3000` to start the app. Select **Index my BIM 360 Account** before using (this process may take a while). 
+Open `http://localhost:3000` to start the app. Select **Index my BIM 360 Account** before using (this process may take a while). Check the `http://localhost:3000/dashboard` to see the jobs running (Hangfire dashboard).
 
 ## Deployment
 
-> Due to memory usage, it's likely that this sample will **crash** on Heroku free & hobby tier (limited to 512Mb of memory).
+> Due to memory usage, it's likely that this sample will **crash** on Heroku free & hobby tier (limited to 512Mb of memory). It may work if drawing do not have much metadata.
 
 To deploy this application to Heroku, the **Callback URL** for Forge must use your `.herokuapp.com` address. After clicking on the button below, at the Heroku Create New App page, set your Client ID, Secret and Callback URL for Forge.
 

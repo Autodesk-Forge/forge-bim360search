@@ -89,6 +89,16 @@ namespace forgeSample
             }
         }
 
+        public static bool SkipAlreadyIndexed
+        {
+            get
+            {
+                // in case we need to force a re-indexing.... useful during debug
+                string v = Config.GetAppSetting("SKIP_ALREADY_INDEXED");
+                return (string.IsNullOrEmpty(v) ? true : bool.Parse(v));
+            }
+        }
+
         public static string WebhookUrl
         {
             get

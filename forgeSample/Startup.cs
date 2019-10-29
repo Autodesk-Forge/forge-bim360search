@@ -114,7 +114,7 @@ namespace forgeSample
             {
                 ServerName = "Index",
                 Queues = new[] { "index" },
-                WorkerCount = 3,
+                WorkerCount = 3, // higher number may cause rate-limit errors (429)
             };
             app.UseHangfireServer(options);
             GlobalConfiguration.Configuration.UseFilter(new PreserveOriginalQueueAttribute());
