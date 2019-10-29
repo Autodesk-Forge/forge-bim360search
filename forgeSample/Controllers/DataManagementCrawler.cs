@@ -98,7 +98,7 @@ namespace forgeSample.Controllers
 
         }
 
-        private async Task GetFolderContentsAsync(Credentials credentials, string hubId, string folderHref, PerformContext context)
+        public async Task GetFolderContentsAsync(Credentials credentials, string hubId, string folderHref, PerformContext context)
         {
             // the API SDK
             FoldersApi folderApi = new FoldersApi();
@@ -118,11 +118,14 @@ namespace forgeSample.Controllers
                 if ((string)folderContentItem.Value.type == "folders")
                 {
                     // get subfolder...
-                    await GetFolderContentsAsync(credentials, hubId, folderContentItem.Value.links.self.href, context);
+                    BackgroundJobClient indexQueue = new BackgroundJobClient();
+                    IState state = new EnqueuedState("index");
+                    string subFolderHref = folderContentItem.Value.links.self.href;
+                    indexQueue.Create(() => GetFolderContentsAsync(credentials, hubId, subFolderHref, null), state);
                 }
                 else
                 {
-                    // found an items!
+                    // found an item!
                     await GetItemVersionsAsync(credentials, hubId, folderUrn, folderContentItem.Value.links.self.href, context);
                 }
 
