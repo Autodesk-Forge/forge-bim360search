@@ -85,8 +85,8 @@ namespace forgeSample.Controllers
                 IRestResponse response = await forgeClient.ExecuteTaskAsync(forgeRequest);
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
                 {
-                    console.WriteLine("Model not ready, will retry");
-                    throw new Exception("Model not ready...");
+                    console.WriteLine(string.Format("Model not ready ({0}), will retry", response.StatusCode));
+                    throw new Exception(string.Format("Model not ready: {0}", response.StatusCode));
                 }
                 using (GZipStream gzip = new GZipStream(new MemoryStream(response.RawBytes), CompressionMode.Decompress))
                 using (var fileStream = new StreamReader(gzip))
