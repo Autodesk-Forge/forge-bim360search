@@ -23,6 +23,7 @@ using Autodesk.Forge;
 using Microsoft.AspNetCore.Http;
 using System.Net;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using Hangfire;
 using Hangfire.States;
@@ -49,11 +50,13 @@ namespace forgeSample.Controllers
                 string versionId = body["resourceUrn"].ToString();
                 string hubId = "b." + body["payload"]["tenant"].ToString();
                 string fileName = body["payload"]["name"].ToString();
+                string extension = fileName.Split(".").Last();
                 string folderUrn = body["hook"]["tenant"].ToString();
                 string itemUrn = body["payload"]["lineageUrn"].ToString();
 
                 // do you want to filter events??
                 if (eventType != "dm.version.added") return Ok();
+                if (Config.SupportedFormats.IndexOf(extension) == -1) return Ok();
 
                 // use Hangfire to schedule a job
                 BackgroundJobClient metadataQueue = new BackgroundJobClient();

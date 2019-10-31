@@ -99,6 +99,15 @@ namespace forgeSample
             }
         }
 
+        public static string SupportedFormats
+        {
+            get
+            {
+                string v = Config.GetAppSetting("SUPPORTED_FORMATS");
+                return (string.IsNullOrEmpty(v) ? "dwg" : v); // comma separated extensions to extract metadata, DWG is the default
+            }
+        }
+
         public static string WebhookUrl
         {
             get

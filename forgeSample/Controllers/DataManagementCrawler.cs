@@ -86,7 +86,7 @@ namespace forgeSample.Controllers
                     // for this sample let's focus on Project Files only      
                     try { if (!folder.Value.attributes.extension.data.visibleTypes.ToString().Contains("items:autodesk.bim360:File")) continue; }
                     catch { continue; } // if we cannot get visibleTypes, maybe it's Recycle, so let's skip...
-                    await GetFolderContentsAsync(credentials.UserId, hubId, folder.Value.links.self.href, context);
+                    await GetFolderContentsAsync(credentials.UserId, hubId, folder.Value.links.self.href, 0, context);
 
                     // 
                     string[] hrefParams = folder.Value.links.self.href.Split('/');
@@ -101,7 +101,7 @@ namespace forgeSample.Controllers
 
         }
 
-        public async Task GetFolderContentsAsync(string userId, string hubId, string folderHref, PerformContext context)
+        public async Task GetFolderContentsAsync(string userId, string hubId, string folderHref, int page, PerformContext context)
         {
             Credentials credentials = await Credentials.FromDatabaseAsync(userId);
 
@@ -114,25 +114,35 @@ namespace forgeSample.Controllers
             string folderUrn = idParams[idParams.Length - 1];
             string projectId = idParams[idParams.Length - 3];
 
-            var folderContents = await folderApi.GetFolderContentsAsync(projectId, folderUrn);
-            var folderData = new DynamicDictionaryItems(folderContents.data);
+            BackgroundJobClient indexQueue = new BackgroundJobClient();
+            IState state = new EnqueuedState("index");
 
-            // let's start iterating the FOLDER DATA
-            foreach (KeyValuePair<string, dynamic> folderContentItem in folderData)
+            try
             {
-                if ((string)folderContentItem.Value.type == "folders")
+                var folderContents = await folderApi.GetFolderContentsAsync(projectId, folderUrn, null, null, null, page, 100);
+                if (folderContents.links.ToString().IndexOf("next") > 0)
+                    indexQueue.Create(() => GetFolderContentsAsync(credentials.UserId, hubId, folderHref, page + 1, null), state);
+                var folderData = new DynamicDictionaryItems(folderContents.data);
+
+                // let's start iterating the FOLDER DATA
+                foreach (KeyValuePair<string, dynamic> folderContentItem in folderData)
                 {
-                    // get subfolder...
-                    BackgroundJobClient indexQueue = new BackgroundJobClient();
-                    IState state = new EnqueuedState("index");
-                    string subFolderHref = folderContentItem.Value.links.self.href;
-                    indexQueue.Create(() => GetFolderContentsAsync(credentials.UserId, hubId, subFolderHref, null), state);
+                    if ((string)folderContentItem.Value.type == "folders")
+                    {
+                        // get subfolder...
+                        string subFolderHref = folderContentItem.Value.links.self.href;
+                        indexQueue.Create(() => GetFolderContentsAsync(credentials.UserId, hubId, subFolderHref, page, null), state);
+                    }
+                    else
+                    {
+                        // found an item!
+                        await GetItemVersionsAsync(credentials, hubId, folderUrn, folderContentItem.Value.links.self.href, context);
+                    }
+
                 }
-                else
-                {
-                    // found an item!
-                    await GetItemVersionsAsync(credentials, hubId, folderUrn, folderContentItem.Value.links.self.href, context);
-                }
+            }
+            catch (Exception e)
+            {
 
             }
         }
@@ -159,7 +169,7 @@ namespace forgeSample.Controllers
             string fileName = (string)item.data.attributes.displayName;
             string extension = fileName.Split(".").Last();
 
-            if (extension != "dwg") return; // only DWG for now...
+            if (Config.SupportedFormats.IndexOf(extension) == -1) return;
 
             string absolutePath = string.Format("/manifest/_doc/{0}", ModelDerivativeController.Base64Encode(itemUrn));
 
