@@ -31,6 +31,7 @@ using Hangfire.Console;
 using System.Linq;
 using Microsoft.AspNetCore.SignalR;
 using RestSharp;
+using System.Diagnostics;
 
 namespace forgeSample.Controllers
 {
@@ -167,7 +168,7 @@ namespace forgeSample.Controllers
 
             string versionUrn = (string)item.data.relationships.tip.data.id;
             string fileName = (string)item.data.attributes.displayName;
-            string extension = fileName.Split(".").Last();
+            string extension = fileName.Split(".").Last().ToLower();
 
             if (Config.SupportedFormats.IndexOf(extension) == -1) return;
 
