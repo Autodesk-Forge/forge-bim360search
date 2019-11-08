@@ -54,12 +54,38 @@ namespace forgeSample.Controllers
             Credentials credentials = await Credentials.FromSessionAsync(base.Request.Cookies, Response.Cookies);
             if (credentials == null) { return Unauthorized(); }
 
+            if (!await IsAccountAdmin(hubId, credentials)) { return Unauthorized(); }
+
             BackgroundJobClient indexQueue = new BackgroundJobClient();
             IState state = new EnqueuedState("index");
             indexQueue.Create(() => IndexHubAsync(credentials.UserId, hubId, null), state);
 
             return Ok();
         }
+
+        private async Task<bool> IsAccountAdmin(string hubId, Credentials credentials)
+        {
+            UserProfileApi userApi = new UserProfileApi();
+            userApi.Configuration.AccessToken = credentials.TokenInternal;
+            dynamic profile = await userApi.GetUserProfileAsync();
+
+            // 2-legged account:read token
+            TwoLeggedApi oauth = new TwoLeggedApi();
+            dynamic bearer = await oauth.AuthenticateAsync(Config.GetAppSetting("FORGE_CLIENT_ID"), Config.GetAppSetting("FORGE_CLIENT_SECRET"), "client_credentials", new Scope[] { Scope.AccountRead });
+
+            RestClient client = new RestClient(Config.BaseUrl);
+            RestRequest thisUserRequest = new RestRequest("/hq/v1/accounts/{account_id}/users/search?email={email}&limit=1", RestSharp.Method.GET);
+            thisUserRequest.AddParameter("account_id", hubId.Replace("b.", string.Empty), ParameterType.UrlSegment);
+            thisUserRequest.AddParameter("email", profile.emailId, ParameterType.UrlSegment);
+            thisUserRequest.AddHeader("Authorization", "Bearer " + bearer.access_token);
+            IRestResponse thisUserResponse = await client.ExecuteTaskAsync(thisUserRequest);
+            dynamic thisUser = JArray.Parse(thisUserResponse.Content);
+
+            string role = thisUser[0].role;
+
+            return (role == "account_admin");
+        }
+
 
         public async Task IndexHubAsync(string userId, string hubId, PerformContext context)
         {

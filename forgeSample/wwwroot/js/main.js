@@ -39,7 +39,7 @@ function isAuthenticated(callback) {
             })
 
             // finally:
-            //showUser();
+            showUser();
 
             if (callback) callback();
         },
@@ -76,3 +76,13 @@ $(document).ready(function () {
         }
     });
 });
+
+function showUser() {
+    jQuery.ajax({
+      url: '/api/forge/user/profile',
+      success: function (profile) {
+        var img = '<img src="' + profile.picture + '" height="30px">';
+        $('#userInfo').html(img + profile.name);
+      }
+    });
+  }

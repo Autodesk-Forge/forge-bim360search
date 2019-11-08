@@ -24,6 +24,7 @@ using Autodesk.Forge;
 using Autodesk.Forge.Model;
 using Newtonsoft.Json.Linq;
 using System.Net;
+using RestSharp;
 
 namespace forgeSample.Controllers
 {

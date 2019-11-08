@@ -115,5 +115,13 @@ namespace forgeSample
                 return Config.GetAppSetting("FORGE_WEBHOOK_URL") + "/api/forge/callback/webhook";
             }
         }
+
+        public static string BaseUrl
+        {
+            get
+            {
+                return "https://developer.api.autodesk.com";
+            }
+        }
     }
 }

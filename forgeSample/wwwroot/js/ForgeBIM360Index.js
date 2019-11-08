@@ -36,6 +36,9 @@ $(document).ready(function () {
             success: function (url) {
                 $('.progress').show();
                 $('#indexProgressBar span').text('Searching for files...');
+            },
+            error: function(res){
+                alert('Only Account Admin can index the account');
             }
         });
     });
